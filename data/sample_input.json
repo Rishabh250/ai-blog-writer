@@ -1,0 +1,10 @@
+{
+    "title": "The Future of AI in Healthcare",
+    "topics": ["AI applications", "healthcare technology", "patient care"],
+    "tone": "professional",
+    "length": "1500-2000 words",
+    "format": {
+        "sections": ["Introduction", "Current Applications", "Future Potential", "Challenges", "Conclusion"],
+        "style": "academic"
+    }
+}
