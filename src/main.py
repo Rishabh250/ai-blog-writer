@@ -8,12 +8,12 @@ from pipeline.prompt_builder import PromptBuilder
 from pipeline.ai_generator import GeminiLLMChain
 
 metadata_json = {
-    "structure": "blog",
+    "structure": "faq", # blog, how-to, listicle, comparison, guide, faq
     "persona": "professional",
-    "topic": "Education Loan for Study is USA",
+    "topic": "Education Loan for Study in USA",
     "tone": "professional",
-    "keyword": "Education Loan for Study is USA",
-    "goal": "Education Loan for Study is USA"
+    "keyword": "Education Loan for Study in USA",
+    "goal": "Education Loan for Study in USA"
 }
 
 prompt_builder = PromptBuilder(metadata_json)

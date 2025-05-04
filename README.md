@@ -135,6 +135,16 @@ ai-blog-writer/
 └── README.md
 ```
 
+### Blog Structure Types:
+| Structure Type | Ideal Word Count | Notes                                       |
+| -------------- | ---------------- | ------------------------------------------- |
+| **How-To**     | 1200–1800 words  | Step-by-step detail is key                  |
+| **Listicle**   | 1000–1500 words  | 7–10 list items, each \~100–150 words       |
+| **Comparison** | 1300–1800 words  | Multiple feature breakdowns, pros/cons      |
+| **Guide**      | 1800–2500 words  | In-depth; includes sections, examples, FAQs |
+| **FAQ**        | 1000–1400 words  | 8–12 questions, each with a concise answer  |
+
+
 ## Contributing
 
 1. Fork the repository
