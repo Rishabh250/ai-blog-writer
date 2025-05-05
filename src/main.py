@@ -11,11 +11,11 @@ from integrations.tools import AIATools
 from pipeline.ai_generator import get_gemini_llm
 
 metadata_json = {
-    "structure": "blog",
-    "persona": "professional",
+    "structure": "blog", # blog, how-to, listicle, comparison, guide, faq
+    "persona": "professional", # professional, academic, casual
     "topic": "AI in Healthcare",
-    "tone": "informative",
-    "keyword": "AI in Healthcare",
+    "tone": "informative", # informative, engaging, persuasive
+    "keyword": "AI in Healthcare", # primary keyword to include naturally
     "goal": "Informative blog post about AI in Healthcare"
 }
 
@@ -32,8 +32,7 @@ def initialize_ai_tools():
 def run_blog_generation():
     tools = initialize_ai_tools()
     prompt_builder = PromptBuilder(metadata_json)
-    prompt_template = prompt_builder.build_prompt()
-    formatted_prompt = prompt_template.format(**metadata_json)
+    prompts = prompt_builder.build_prompt()  # Returns a dict of section prompts
     llm_chain = get_gemini_llm()
 
     agent = initialize_agent(
@@ -46,12 +45,21 @@ def run_blog_generation():
         early_stopping_method="generate",
     )
 
+    blog_sections = []
     try:
-        result = agent.invoke({"input": formatted_prompt})
-        return result["output"]
+        for section, prompt_template in prompts.items():
+            formatted_prompt = prompt_template.format(**metadata_json)
+            print(f"\n=== Generating: {section} ===")
+            result = agent.invoke({"input": formatted_prompt})
+            blog_sections.append(f"## {section}\n{result['output']}\n")
+
+        full_blog = "\n".join(blog_sections)
+        return full_blog
+
     except Exception as e:
         print(f"Error during blog generation: {str(e)}")
         return "Error processing the blog. Please check the logs."
+
 
 if __name__ == "__main__":
     print(run_blog_generation())
