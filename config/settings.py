@@ -18,6 +18,11 @@ class Settings:
     # Google Drive Configuration
     GOOGLE_DRIVE_FOLDER_ID = os.getenv("GOOGLE_DRIVE_FOLDER_ID", "")
 
+    # SerpAPI Configuration
+    SERPAPI_KEY = os.getenv("SERPAPI_KEY", "")
+    SERPAPI_LANGUAGE = os.getenv("SERPAPI_LANGUAGE", "en")
+    SERPAPI_GEO_LOCATION = os.getenv("SERPAPI_GEO_LOCATION", "us")
+
     # Application Settings
     DEBUG = os.getenv("DEBUG", "False").lower() == "true"
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")

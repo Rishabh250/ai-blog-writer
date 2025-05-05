@@ -11,3 +11,6 @@ psycopg2-binary
 requests
 uuid  # comes with Python, no need to install separately
 loguru
+serpapi
+google-search-results
+langchain-community
