@@ -1,5 +1,5 @@
-from langchain.prompts import PromptTemplate
 from typing import Dict, Any
+from langchain.prompts import PromptTemplate
 
 class BlogLengthManager:
     def __init__(self, structure_type):

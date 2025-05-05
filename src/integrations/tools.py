@@ -1,12 +1,10 @@
-import json
-from typing import Dict, List
+from typing import Dict, List, Any
 from datetime import datetime
 
 from serpapi import GoogleSearch
 from config.settings import settings
-from pipeline.ai_generator import get_gemini_llm
-from pipeline.prompt_builder import PromptBuilder
-from typing import Dict, Any
+from src.pipeline.ai_generator import get_gemini_llm
+from src.pipeline.prompt_builder import PromptBuilder
 
 class AIATools:
     def __init__(self, metadata_json: Dict[str, Any]):
@@ -32,9 +30,6 @@ class AIATools:
             return results
         except (KeyError, ValueError, TypeError) as e:
             print(f"Error processing trends data: {str(e)}")
-            return {}
-        except Exception as e:
-            print(f"Unexpected error fetching trends data: {str(e)}")
             return {}
 
     def format_trends_for_llm(self, trends_data: Dict) -> Dict:
@@ -89,6 +84,8 @@ class AIATools:
     def get_raw_trends(self) -> Dict:
         short_term = self._get_trends_data(data_type="TIMESERIES", time_period="today 1-m")
         related_queries = self._get_trends_data(data_type="RELATED_QUERIES")
+        if not short_term or not related_queries:
+            return {}
         related_keywords = self._generate_related_keywords()
         related_keyword_trends = {}
         for keyword in related_keywords:

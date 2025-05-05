@@ -1,14 +1,8 @@
-import sys
-import os
 from langchain.agents import Tool, initialize_agent, AgentType
 
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
-
-from pipeline.prompt_builder import PromptBuilder
-from integrations.tools import AIATools
-from pipeline.ai_generator import get_gemini_llm
+from src.pipeline.prompt_builder import PromptBuilder
+from src.integrations.tools import AIATools
+from src.pipeline.ai_generator import get_gemini_llm
 
 metadata_json = {
     "structure": "blog", # blog, how-to, listicle, comparison, guide, faq
@@ -24,15 +18,15 @@ def initialize_ai_tools():
     trends_data = Tool(
         name="fetch_google_trends_data",
         func=lambda x: ai_tools_instance.get_raw_trends(),
-        description='''Fetches Google Trends data for the blog topic, including interest 
+        description='''Fetches Google Trends data for the blog topic, including interest
         over time, regional interest, and related queries.'''
     )
     return [trends_data]
 
-def run_blog_generation():
+def run_blog_generation() -> str:
     tools = initialize_ai_tools()
     prompt_builder = PromptBuilder(metadata_json)
-    prompts = prompt_builder.build_prompt()  # Returns a dict of section prompts
+    prompts = prompt_builder.build_prompt()
     llm_chain = get_gemini_llm()
 
     agent = initialize_agent(
@@ -56,10 +50,6 @@ def run_blog_generation():
         full_blog = "\n".join(blog_sections)
         return full_blog
 
-    except Exception as e:
+    except (KeyError, ValueError, ConnectionError, TimeoutError) as e:
         print(f"Error during blog generation: {str(e)}")
         return "Error processing the blog. Please check the logs."
-
-
-if __name__ == "__main__":
-    print(run_blog_generation())
