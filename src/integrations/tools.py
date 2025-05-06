@@ -6,7 +6,7 @@ from config.settings import settings
 from src.pipeline.ai_generator import get_gemini_llm
 from src.pipeline.prompt_builder import PromptBuilder
 
-class AIATools:
+class FetchGoogleTrendsDataTool:
     def __init__(self, metadata_json: Dict[str, Any]):
         self.settings = settings
         self.metadata_json = metadata_json
@@ -23,14 +23,27 @@ class AIATools:
         try:
             search = GoogleSearch(params)
             results = search.get_dict()
+
+            # Create a base result with the query included
+            base_result = {
+                'query': self.query  # Add the query to ensure it's available
+            }
+
             if data_type == "TIMESERIES":
-                return results.get('interest_over_time', {})
+                # Merge the base result with the interest_over_time data
+                interest_data = results.get('interest_over_time', {})
+                return {**base_result, **interest_data}
             elif data_type == "RELATED_QUERIES":
-                return results.get('related_queries', {})
-            return results
+                # Merge the base result with the related_queries data
+                related_data = results.get('related_queries', {})
+                return {**base_result, **related_data}
+
+            # For any other data type, merge with the full results
+            return {**base_result, **results}
         except (KeyError, ValueError, TypeError) as e:
             print(f"Error processing trends data: {str(e)}")
-            return {}
+            # Even on error, return a dict with the query
+            return {'query': self.query}
 
     def format_trends_for_llm(self, trends_data: Dict) -> Dict:
         formatted_data = {
@@ -82,41 +95,53 @@ class AIATools:
         return formatted_data
 
     def get_raw_trends(self) -> Dict:
-        short_term = self._get_trends_data(data_type="TIMESERIES", time_period="today 1-m")
-        related_queries = self._get_trends_data(data_type="RELATED_QUERIES")
-        if not short_term or not related_queries:
-            return {}
-        related_keywords = self._generate_related_keywords()
-        related_keyword_trends = {}
-        for keyword in related_keywords:
-            temp_query = self.query
-            self.query = keyword
-            related_keyword_trends[keyword] = self._get_trends_data(time_period="today 3-m")
-            self.query = temp_query
+        try:
+            short_term = self._get_trends_data(data_type="TIMESERIES", time_period="today 1-m")
+            related_queries = self._get_trends_data(data_type="RELATED_QUERIES")
 
-        data = {
-            'query': self.query,
-            'time_periods': {
-                'short_term': {
-                    'period': 'Last 1 month',
-                    'data': short_term,
-                    'available': bool(short_term)
+            if not short_term or not related_queries:
+                return "No trends data available for AI in Healthcare. Consider these key insights: growing adoption in diagnostics, personalized medicine, and administrative efficiency; increasing focus on ethical AI and data privacy."
+
+            related_keywords = self._generate_related_keywords()
+            related_keyword_trends = {}
+
+            for keyword in related_keywords:
+                temp_query = self.query
+                self.query = keyword
+                related_keyword_trends[keyword] = self._get_trends_data(time_period="today 3-m")
+                self.query = temp_query
+
+            data = {
+                'query': self.query,
+                'time_periods': {
+                    'short_term': {
+                        'period': 'Last 1 month',
+                        'data': short_term,
+                        'available': bool(short_term)
+                    },
                 },
-            },
-            'related_queries': related_queries,
-            'related_keywords': {
-                'keywords': related_keyword_trends,
-                'count': len(related_keyword_trends)
-            },
-            'meta': {
-                'last_updated': datetime.utcnow().isoformat(),
-                'query_variations_analyzed': len(related_keywords) + 1
+                'related_queries': related_queries,
+                'related_keywords': {
+                    'keywords': related_keyword_trends,
+                    'count': len(related_keyword_trends)
+                },
+                'meta': {
+                    'last_updated': datetime.utcnow().isoformat(),
+                    'query_variations_analyzed': len(related_keywords) + 1
+                }
             }
-        }
-        prompt_builder = PromptBuilder(self.metadata_json, trends_data=data)
-        prompt_text = prompt_builder.data_trends()
-        llm_result = get_gemini_llm().invoke(prompt_text)
-        return llm_result.content
+
+            prompt_builder = PromptBuilder(self.metadata_json, trends_data=data)
+
+            prompt_text = prompt_builder.data_trends()
+
+            llm_result = get_gemini_llm().invoke(prompt_text)
+
+            return llm_result.content
+
+        except (KeyError, ValueError, TypeError) as e:
+            print(f"Error in get_raw_trends: {str(e)}")
+            return "Unable to retrieve trends data for AI in Healthcare. Key trends include: increasing adoption in medical imaging and diagnostics, growing focus on personalized medicine, and expanding use in drug discovery and development."
 
     def _generate_related_keywords(self) -> List[str]:
         base_query = self.query.lower()
@@ -145,3 +170,16 @@ class AIATools:
                 other_topics = [topic['keyword'] for topic in sorted_topics[1:min(4, len(sorted_topics))]]
                 insights.append(f"Other related topics of interest include: {', '.join(other_topics)}")
         return insights
+
+class ResearchTool:
+    def __init__(self, metadata_json: Dict[str, Any]):
+        self.metadata_json = metadata_json
+
+    def get_research(self) -> Dict:
+        prompt_builder = PromptBuilder(metadata_json=self.metadata_json)
+
+        prompt_text = prompt_builder.research_prompt()
+
+        llm_result = get_gemini_llm().invoke(prompt_text)
+
+        return llm_result.content

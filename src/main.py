@@ -1,9 +1,6 @@
-from langchain.agents import Tool, initialize_agent, AgentType
-
 from src.pipeline.prompt_builder import PromptBuilder
-from src.integrations.tools import AIATools
+from src.integrations.tools import FetchGoogleTrendsDataTool, ResearchTool
 from src.pipeline.ai_generator import get_gemini_llm
-from src.integrations.google_docs import GoogleDocs
 from src.utils.helpers import Helpers
 
 metadata_json = {
@@ -14,47 +11,29 @@ metadata_json = {
     "keyword": "AI in Healthcare", # primary keyword to include naturally
     "goal": "Informative blog post about AI in Healthcare"
 }
-
 def initialize_ai_tools():
-    ai_tools_instance = AIATools(metadata_json)
-    trends_data = Tool(
-        name="fetch_google_trends_data",
-        func=lambda x: ai_tools_instance.get_raw_trends(),
-        description='''Fetches Google Trends data for the blog topic, including interest
-        over time, regional interest, and related queries.'''
-    )
-    return [trends_data]
-
-def save_to_google_docs(title: str, content: str):
-    google_docs = GoogleDocs()
-    google_docs.create_google_doc(title, content)
+    ai_tools_instance = FetchGoogleTrendsDataTool(metadata_json)
+    research_tool_instance = ResearchTool(metadata_json)
+    trends_data = ai_tools_instance.get_raw_trends()
+    research_data = research_tool_instance.get_research()
+    return trends_data, research_data
 
 def run_blog_generation() -> bool:
-    tools = initialize_ai_tools()
-    prompt_builder = PromptBuilder(metadata_json)
+    trends_data, research_data = initialize_ai_tools()
+    prompt_builder = PromptBuilder(metadata_json, trends_data=trends_data, research_data=research_data)
     prompts = prompt_builder.build_prompt()
     llm_chain = get_gemini_llm()
 
-    agent = initialize_agent(
-        tools=tools,
-        llm=llm_chain,
-        agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-        handle_parsing_errors=True,
-        verbose=False,
-        max_iterations=3,
-        early_stopping_method="generate",
-    )
-
     blog_sections = []
     try:
-        for section, prompt_template in prompts.items():
+        for prompt_template in prompts.values():
             formatted_prompt = prompt_template.format(**metadata_json)
-            result = agent.invoke({"input": formatted_prompt})
-            blog_sections.append(f"## {section}\n{result['output']}\n")
+            result = llm_chain.invoke(formatted_prompt)
+            blog_sections.append(f"{result.content}\n")
 
         full_blog = "\n".join(blog_sections)
         full_blog_text, full_blog_html = Helpers.markdown_to_text(full_blog)
-        save_to_google_docs(metadata_json["topic"], full_blog_html)
+        print(full_blog)
         return True
 
     except (KeyError, ValueError, ConnectionError, TimeoutError) as e:

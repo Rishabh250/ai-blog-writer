@@ -1,15 +1,11 @@
 langchain
 langchain-google-genai
-google-api-python-client
-google-auth
-google-auth-oauthlib
 pydantic
 validators
 python-dotenv
 psycopg2-binary
-# pymongo
 requests
-uuid  # comes with Python, no need to install separately
+uuid
 loguru
 serpapi
 google-search-results

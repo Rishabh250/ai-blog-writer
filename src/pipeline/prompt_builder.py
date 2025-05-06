@@ -27,6 +27,7 @@ class PromptBuilder:
         self.metadata_json = metadata_json
         self.length_manager = BlogLengthManager(metadata_json.get("structure", "blog"))
         self.trends_data = kwargs.get("trends_data", None)
+        self.research_data = kwargs.get("research_data", None)
 
         self.metadata_json["min_words"], self.metadata_json["max_words"] = self.length_manager.get_ideal_word_count()
 
@@ -41,7 +42,7 @@ class PromptBuilder:
             "guide": ["Introduction", "Detailed Guide Sections", "Expert Tips", "Conclusion", "FAQs", "Meta Description"],
             "faq": ["Introduction", "Comprehensive FAQ Section", "Conclusion", "Meta Description"]
         }
-    
+
         return steps.get(structure, ["Introduction", "Main Content", "Conclusion", "FAQs", "Meta Description"])
 
     def build_prompt(self):
@@ -54,6 +55,12 @@ class PromptBuilder:
             if self.trends_data and section.lower() in ["introduction", "main content", "guide body", "step-by-step guide"]
             else ""
         )
+
+            research_text = (
+                f"\nResearch insights to consider (summarized):\n{self.research_data}\n"
+                if self.research_data and section.lower() in ["introduction", "main content", "guide body", "step-by-step guide"]
+                else ""
+            )
 
             if section.lower() == "meta description":
                 guidelines = "- Write a natural-sounding, SEO-optimized meta description (150–160 characters) that clearly conveys the article's value.\n"
@@ -81,15 +88,17 @@ class PromptBuilder:
                     "- Purpose: {goal}\n"
                     "- Intended Audience: {persona}\n"
                     f"{trends_text}\n"
+                    f"{research_text}\n"
                     "Writing Guidelines:\n"
                     f"{guidelines}"
                     "Keep the language fluid, insightful, and grounded. Avoid generic phrasing and overly polished structure.\n"
                     "Write in a professional, third-person voice with a touch of authenticity.\n"
+                    "Use the research tool to get research insights for the blog post and only do research when needed, tool name is 'research_tool'.\n"
                 )
             )
-        
+
             prompts[section] = template
-        
+
         return prompts
 
     def data_trends(self):
@@ -107,4 +116,32 @@ class PromptBuilder:
 
         Provide a clear and well-organized report.
         """
+
+        return prompt_text
+
+    def research_prompt(self):
+        prompt_text = f"""
+        You are a Research Agent supporting blog content creation.
+
+        Goal: "{self.metadata_json['goal']}"
+        Topic: "{self.metadata_json['topic']}"
+
+        Research Objectives:
+        1. Summarize the topic's current landscape and relevance.
+        2. Identify key trends, controversies, or recent developments.
+        3. Highlight authoritative sources, influential figures, or organizations in this field.
+        4. Uncover statistics, case studies, or examples that illustrate important points.
+        5. Explore different perspectives or approaches to the topic.
+        6. Identify potential challenges or criticisms related to the topic.
+        7. Maximum size of the research should be less than 300 words.
+
+        Provide actionable insights for blog writers:
+        - Suggest compelling angles or hooks for the blog post
+        - Recommend subtopics or sections to cover
+        - Propose questions the blog post should address
+        - Identify key terms or concepts to explain
+
+        Present findings in a clear, structured format optimized for blog writing.
+        """
+
         return prompt_text
