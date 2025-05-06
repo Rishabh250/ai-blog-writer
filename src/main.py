@@ -11,20 +11,26 @@ metadata_json = {
     "keyword": "AI in Healthcare", # primary keyword to include naturally
     "goal": "Informative blog post about AI in Healthcare"
 }
+
 def initialize_ai_tools():
     fetch_trends_tool  = FetchGoogleTrendsDataTool(metadata_json)
     research_tool = ResearchTool(metadata_json)
+
     trends_data = fetch_trends_tool.get_raw_trends()
     research_data = research_tool.get_research()
+
     return trends_data, research_data
 
 def run_blog_generation() -> bool:
     trends_data, research_data = initialize_ai_tools()
+
     prompt_builder = PromptBuilder(metadata_json, trends_data=trends_data, research_data=research_data)
     prompts = prompt_builder.build_prompt()
+
     llm_chain = get_gemini_llm()
 
     blog_sections = []
+
     try:
         for prompt_template in prompts.values():
             formatted_prompt = prompt_template.format(**metadata_json)
@@ -32,7 +38,7 @@ def run_blog_generation() -> bool:
             blog_sections.append(f"{result.content}\n")
 
         full_blog = "\n".join(blog_sections)
-        full_blog_text, full_blog_html = Helpers.markdown_to_text(full_blog)
+        # full_blog_text, full_blog_html = Helpers.markdown_to_text(full_blog)
         print(full_blog)
         return True
 
