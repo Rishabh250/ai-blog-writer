@@ -1,7 +1,7 @@
 from src.pipeline.prompt_builder import PromptBuilder
 from src.integrations.tools import FetchGoogleTrendsDataTool, ResearchTool
 from src.pipeline.ai_generator import get_gemini_llm
-from src.utils.helpers import Helpers
+# from src.utils.helpers import Helpers
 
 metadata_json = {
     "structure": "blog", # blog, how-to, listicle, comparison, guide, faq
