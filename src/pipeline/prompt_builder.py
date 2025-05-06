@@ -35,12 +35,12 @@ class PromptBuilder:
         structure = structure.lower()
 
         steps = {
-            "blog": ["Introduction", "Main Content", "Conclusion", "FAQs", "Meta Description"],
-            "how-to": ["Introduction", "Step-by-Step Guide", "Tips & Best Practices", "Conclusion", "FAQs", "Meta Description"],
-            "listicle": ["Introduction", "List Items with Details", "Conclusion", "FAQs", "Meta Description"],
-            "comparison": ["Introduction", "Criteria for Comparison", "Detailed Comparison", "Pros & Cons", "Conclusion", "FAQs", "Meta Description"],
-            "guide": ["Introduction", "Detailed Guide Sections", "Expert Tips", "Conclusion", "FAQs", "Meta Description"],
-            "faq": ["Introduction", "Comprehensive FAQ Section", "Conclusion", "Meta Description"]
+            "blog": ["Introduction", "Main Content", "Conclusion", "FAQs", "Meta Description", "References"],
+            "how-to": ["Introduction", "Step-by-Step Guide", "Tips & Best Practices", "Conclusion", "FAQs", "Meta Description", "References"],
+            "listicle": ["Introduction", "List Items with Details", "Conclusion", "FAQs", "Meta Description", "References"],
+            "comparison": ["Introduction", "Criteria for Comparison", "Detailed Comparison", "Pros & Cons", "Conclusion", "FAQs", "Meta Description", "References"],
+            "guide": ["Introduction", "Detailed Guide Sections", "Expert Tips", "Conclusion", "FAQs", "Meta Description", "References"],
+            "faq": ["Introduction", "Comprehensive FAQ Section", "Conclusion", "Meta Description", "References"]
         }
 
         return steps.get(structure, ["Introduction", "Main Content", "Conclusion", "FAQs", "Meta Description"])

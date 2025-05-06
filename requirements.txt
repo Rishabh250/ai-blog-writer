@@ -12,4 +12,6 @@ google-search-results
 langchain-community
 beautifulsoup4
 markdown
+fastapi
+uvicorn
 
