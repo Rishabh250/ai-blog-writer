@@ -12,10 +12,10 @@ metadata_json = {
     "goal": "Informative blog post about AI in Healthcare"
 }
 def initialize_ai_tools():
-    ai_tools_instance = FetchGoogleTrendsDataTool(metadata_json)
-    research_tool_instance = ResearchTool(metadata_json)
-    trends_data = ai_tools_instance.get_raw_trends()
-    research_data = research_tool_instance.get_research()
+    fetch_trends_tool  = FetchGoogleTrendsDataTool(metadata_json)
+    research_tool = ResearchTool(metadata_json)
+    trends_data = fetch_trends_tool.get_raw_trends()
+    research_data = research_tool.get_research()
     return trends_data, research_data
 
 def run_blog_generation() -> bool:
