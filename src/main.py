@@ -3,6 +3,8 @@ from langchain.agents import Tool, initialize_agent, AgentType
 from src.pipeline.prompt_builder import PromptBuilder
 from src.integrations.tools import AIATools
 from src.pipeline.ai_generator import get_gemini_llm
+from src.integrations.google_docs import GoogleDocs
+from src.utils.helpers import Helpers
 
 metadata_json = {
     "structure": "blog", # blog, how-to, listicle, comparison, guide, faq
@@ -23,7 +25,11 @@ def initialize_ai_tools():
     )
     return [trends_data]
 
-def run_blog_generation() -> str:
+def save_to_google_docs(title: str, content: str):
+    google_docs = GoogleDocs()
+    google_docs.create_google_doc(title, content)
+
+def run_blog_generation() -> bool:
     tools = initialize_ai_tools()
     prompt_builder = PromptBuilder(metadata_json)
     prompts = prompt_builder.build_prompt()
@@ -43,13 +49,14 @@ def run_blog_generation() -> str:
     try:
         for section, prompt_template in prompts.items():
             formatted_prompt = prompt_template.format(**metadata_json)
-            print(f"\n=== Generating: {section} ===")
             result = agent.invoke({"input": formatted_prompt})
             blog_sections.append(f"## {section}\n{result['output']}\n")
 
         full_blog = "\n".join(blog_sections)
-        return full_blog
+        full_blog_text, full_blog_html = Helpers.markdown_to_text(full_blog)
+        save_to_google_docs(metadata_json["topic"], full_blog_html)
+        return True
 
     except (KeyError, ValueError, ConnectionError, TimeoutError) as e:
         print(f"Error during blog generation: {str(e)}")
-        return "Error processing the blog. Please check the logs."
+        return False

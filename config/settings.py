@@ -15,9 +15,6 @@ class Settings:
     DB_URI = os.getenv("DB_URI", "")
     DB_NAME = os.getenv("DB_NAME", "blog_writer")
 
-    # Google Drive Configuration
-    GOOGLE_DRIVE_FOLDER_ID = os.getenv("GOOGLE_DRIVE_FOLDER_ID", "")
-
     # SerpAPI Configuration
     SERPAPI_KEY = os.getenv("SERPAPI_KEY", "")
     SERPAPI_LANGUAGE = os.getenv("SERPAPI_LANGUAGE", "en")
@@ -26,5 +23,11 @@ class Settings:
     # Application Settings
     DEBUG = os.getenv("DEBUG", "False").lower() == "true"
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+
+    # GOOGLE Drive Settings
+    GOOGLE_SERVICE_ACCOUNT = os.getenv("GOOGLE_SERVICE_ACCOUNT", "")
+    GOOGLE_DRIVE_FOLDER_ID = os.getenv("GOOGLE_DRIVE_FOLDER_ID", "")
+    GOOGLE_EMAIL = os.getenv("GOOGLE_EMAIL", "")
+    GOOGLE_SCOPES = os.getenv("GOOGLE_SCOPES", "").split(",")
 
 settings = Settings()
