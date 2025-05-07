@@ -101,7 +101,7 @@ class FetchGoogleTrendsDataTool:
             related_queries = self._get_trends_data(data_type="RELATED_QUERIES")
 
             if not short_term or not related_queries:
-                return "No trends data available for AI in Healthcare. Consider these key insights: growing adoption in diagnostics, personalized medicine, and administrative efficiency; increasing focus on ethical AI and data privacy."
+                return "No trends data available for the given topic."
 
             related_keywords = self._generate_related_keywords()
             related_keyword_trends = {}
@@ -144,7 +144,7 @@ class FetchGoogleTrendsDataTool:
 
         except (KeyError, ValueError, TypeError) as e:
             print(f"Error in get_raw_trends: {str(e)}")
-            return "Unable to retrieve trends data for AI in Healthcare. Key trends include: increasing adoption in medical imaging and diagnostics, growing focus on personalized medicine, and expanding use in drug discovery and development."
+            return "Unable to retrieve trends data for the given topic."
 
     def _generate_related_keywords(self) -> List[str]:
         base_query = self.query.lower()
