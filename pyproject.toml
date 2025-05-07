@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "ai-blog-writer"
 version = "0.1.0"
@@ -21,3 +25,44 @@ dependencies = [
     "uuid>=1.30",
     "validators>=0.35.0",
 ]
+
+[tool.ruff]
+# Allow lines to be as long as 88 characters
+line-length = 88
+# Target Python 3.11
+target-version = "py311"
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".git",
+    ".env",
+    ".venv",
+    "__pycache__",
+    "*.pyc",
+]
+
+[tool.ruff.lint]
+# Enable flake8-bugbear (`B`) rules.
+select = ["E", "F", "B", "I", "N", "W"]
+ignore = [
+    "E501",    # line too long
+    "B905",    # zip without strict=True (requires Python 3.10+)
+    "D107",    # Missing docstring in __init__
+    "D203",    # One blank line before class docstring
+    "D213",    # Multi-line summary should start at second line
+    "D103",
+    "D101",
+    "D100",
+    "D102",
+    "D104",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # Unused imports
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double"
+inline-quotes = "double"
+

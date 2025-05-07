@@ -1,14 +1,16 @@
 import os
+
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
+
 class Settings:
     # API Keys
     GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 
-    #LLM Configuration
+    # LLM Configuration
     LLM_MODEL = os.getenv("LLM_MODEL", "gemini-1.5-flash")
 
     # Database Configuration
@@ -29,5 +31,6 @@ class Settings:
     GOOGLE_DRIVE_FOLDER_ID = os.getenv("GOOGLE_DRIVE_FOLDER_ID", "")
     GOOGLE_EMAIL = os.getenv("GOOGLE_EMAIL", "")
     GOOGLE_SCOPES = os.getenv("GOOGLE_SCOPES", "").split(",")
+
 
 settings = Settings()

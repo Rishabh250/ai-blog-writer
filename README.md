@@ -66,24 +66,22 @@ cd ai-blog-writer
 2. Create a virtual environment and activate it:
 
 ```bash
-python -m venv .venv
+uv init
+uv venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```
 
 3. Install dependencies using uv (faster, more reliable Python package installer):
 
 ```bash
-# Install uv if you don't have it yet
-pip install uv
-
 # Install dependencies with uv
-uv pip install -r requirements.txt
+uv install -r requirements.txt
 ```
 
 Alternatively, you can use pip:
 
 ```bash
-pip install -r requirements.txt
+uv install -r requirements.txt
 ```
 
 4. Set up environment variables:

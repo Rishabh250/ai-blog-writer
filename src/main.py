@@ -1,8 +1,10 @@
-from typing import Dict, Any, Tuple
-from src.pipeline.prompt_builder import PromptBuilder
+from typing import Any, Dict, Tuple
+
 from src.integrations.tools import FetchGoogleTrendsDataTool, ResearchTool
 from src.pipeline.ai_generator import get_gemini_llm
+from src.pipeline.prompt_builder import PromptBuilder
 from src.utils.helpers import Helpers
+
 
 def initialize_ai_tools(metadata: Dict[str, Any]):
     fetch_trends_tool = FetchGoogleTrendsDataTool(metadata)
@@ -13,6 +15,7 @@ def initialize_ai_tools(metadata: Dict[str, Any]):
 
     return trends_data, research_data
 
+
 def run_blog_generation(metadata: Dict[str, Any] = None) -> Tuple[str, str, bool]:
     if metadata is None:
         return "No metadata provided", "", False
@@ -22,7 +25,9 @@ def run_blog_generation(metadata: Dict[str, Any] = None) -> Tuple[str, str, bool
     try:
         trends_data, research_data = initialize_ai_tools(metadata_json)
 
-        prompt_builder = PromptBuilder(metadata_json, trends_data=trends_data, research_data=research_data)
+        prompt_builder = PromptBuilder(
+            metadata_json, trends_data=trends_data, research_data=research_data
+        )
         prompts = prompt_builder.build_prompt()
 
         llm_chain = get_gemini_llm()
