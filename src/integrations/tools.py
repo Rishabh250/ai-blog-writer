@@ -26,25 +26,18 @@ class FetchGoogleTrendsDataTool:
             search = GoogleSearch(params)
             results = search.get_dict()
 
-            # Create a base result with the query included
-            base_result = {
-                "query": self.query  # Add the query to ensure it's available
-            }
+            base_result = {"query": self.query}
 
             if data_type == "TIMESERIES":
-                # Merge the base result with the interest_over_time data
                 interest_data = results.get("interest_over_time", {})
                 return {**base_result, **interest_data}
             elif data_type == "RELATED_QUERIES":
-                # Merge the base result with the related_queries data
                 related_data = results.get("related_queries", {})
                 return {**base_result, **related_data}
 
-            # For any other data type, merge with the full results
             return {**base_result, **results}
         except (KeyError, ValueError, TypeError) as e:
             print(f"Error processing trends data: {str(e)}")
-            # Even on error, return a dict with the query
             return {"query": self.query}
 
     def format_trends_for_llm(self, trends_data: Dict) -> Dict:

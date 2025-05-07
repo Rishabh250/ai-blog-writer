@@ -17,9 +17,6 @@ def initialize_ai_tools(metadata: Dict[str, Any]):
 
 
 def run_blog_generation(metadata: Dict[str, Any] = None) -> Tuple[str, str, bool]:
-    if metadata is None:
-        return "No metadata provided", "", False
-
     metadata_json = metadata
 
     try:
@@ -28,6 +25,7 @@ def run_blog_generation(metadata: Dict[str, Any] = None) -> Tuple[str, str, bool
         prompt_builder = PromptBuilder(
             metadata_json, trends_data=trends_data, research_data=research_data
         )
+
         prompts = prompt_builder.build_prompt()
 
         llm_chain = get_gemini_llm()

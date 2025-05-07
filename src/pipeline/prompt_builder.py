@@ -2,6 +2,8 @@ from typing import Any, Dict
 
 from langchain.prompts import PromptTemplate
 
+from src.utils.constants import Constants
+
 
 class BlogLengthManager:
     def __init__(self, structure_type):
@@ -30,6 +32,9 @@ class PromptBuilder:
         self.length_manager = BlogLengthManager(metadata_json.get("structure", "blog"))
         self.trends_data = kwargs.get("trends_data", None)
         self.research_data = kwargs.get("research_data", None)
+        self.steps = self.get_blog_structure_steps(
+            metadata_json.get("structure", "blog")
+        )
 
         self.metadata_json["min_words"], self.metadata_json["max_words"] = (
             self.length_manager.get_ideal_word_count()
@@ -38,70 +43,14 @@ class PromptBuilder:
     def get_blog_structure_steps(self, structure: str):
         structure = structure.lower()
 
-        steps = {
-            "blog": [
-                "Introduction",
-                "Main Content",
-                "Conclusion",
-                "FAQs",
-                "Meta Description",
-                "References",
-            ],
-            "how-to": [
-                "Introduction",
-                "Step-by-Step Guide",
-                "Tips & Best Practices",
-                "Conclusion",
-                "FAQs",
-                "Meta Description",
-                "References",
-            ],
-            "listicle": [
-                "Introduction",
-                "List Items with Details",
-                "Conclusion",
-                "FAQs",
-                "Meta Description",
-                "References",
-            ],
-            "comparison": [
-                "Introduction",
-                "Criteria for Comparison",
-                "Detailed Comparison",
-                "Pros & Cons",
-                "Conclusion",
-                "FAQs",
-                "Meta Description",
-                "References",
-            ],
-            "guide": [
-                "Introduction",
-                "Detailed Guide Sections",
-                "Expert Tips",
-                "Conclusion",
-                "FAQs",
-                "Meta Description",
-                "References",
-            ],
-            "faq": [
-                "Introduction",
-                "Comprehensive FAQ Section",
-                "Conclusion",
-                "Meta Description",
-                "References",
-            ],
-        }
+        steps = Constants.STRUCTURE_STEPS.get(structure, [])
 
-        return steps.get(
-            structure,
-            ["Introduction", "Main Content", "Conclusion", "FAQs", "Meta Description"],
-        )
+        return steps
 
     def build_prompt(self):
-        steps = self.get_blog_structure_steps(self.metadata_json["structure"])
         prompts = {}
 
-        for section in steps:
+        for section in self.steps:
             trends_text = (
                 f"\nTrend insights to consider (summarized):\n{self.trends_data}\n"
                 if self.trends_data

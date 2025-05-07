@@ -43,9 +43,7 @@ async def root():
 
 
 @app.post("/generate-blog", response_model=BlogResponse)
-async def generate_blog(
-    metadata: BlogMetadata,
-):
+async def generate_blog(metadata: BlogMetadata):
     try:
         if not metadata.keyword:
             metadata.keyword = metadata.topic
