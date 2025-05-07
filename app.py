@@ -5,7 +5,6 @@ from pydantic import BaseModel
 import uvicorn
 from src.main import run_blog_generation
 
-
 app = FastAPI(
     title="AI Blog Writer API",
     description="An API for generating AI-powered blog content",
@@ -30,7 +29,6 @@ class BlogMetadata(BaseModel):
 
 class BlogResponse(BaseModel):
     content: str
-    text: str
     html: str
     success: bool
 
@@ -46,12 +44,12 @@ async def generate_blog(metadata: BlogMetadata = Body(...)):
 
         metadata_dict = metadata.model_dump()
 
-        content, text, html, success = run_blog_generation(metadata_dict)
+        content, html, success = run_blog_generation(metadata_dict)
 
         if not success:
             raise HTTPException(status_code=500, detail="Blog generation failed")
 
-        return BlogResponse(content=content, text=text, html=html, success=success)
+        return BlogResponse(content=content, html=html, success=success)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 

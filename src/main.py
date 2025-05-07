@@ -13,9 +13,9 @@ def initialize_ai_tools(metadata: Dict[str, Any]):
 
     return trends_data, research_data
 
-def run_blog_generation(metadata: Dict[str, Any] = None) -> Tuple[str, str, str, bool]:
+def run_blog_generation(metadata: Dict[str, Any] = None) -> Tuple[str, str, bool]:
     if metadata is None:
-        return "No metadata provided", "", "", False
+        return "No metadata provided", "", False
 
     metadata_json = metadata
 
@@ -35,11 +35,11 @@ def run_blog_generation(metadata: Dict[str, Any] = None) -> Tuple[str, str, str,
             blog_sections.append(f"{result.content}\n")
 
         full_blog = "\n".join(blog_sections)
-        full_blog_text, full_blog_html = Helpers.markdown_to_text(full_blog)
+        html = Helpers.markdown_to_text(full_blog)
 
-        return full_blog, full_blog_text, full_blog_html, True
+        return full_blog, html, True
 
     except (KeyError, ValueError, ConnectionError, TimeoutError) as e:
         error_message = f"Error during blog generation: {str(e)}"
         print(error_message)
-        return error_message, "", "", False
+        return error_message, "", False

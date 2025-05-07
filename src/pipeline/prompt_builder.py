@@ -92,6 +92,7 @@ class PromptBuilder:
                     "Writing Guidelines:\n"
                     f"{guidelines}"
                     "Keep the language fluid, insightful, and grounded. Avoid generic phrasing and overly polished structure.\n"
+                    "Avoid using placeholder phrases such as 'Okay, here's...' or 'Let me...' at the beginning of sections.\n"
                     "Write in a professional, third-person voice with a touch of authenticity.\n"
                     "Use the research tool to get research insights for the blog post and only do research when needed, tool name is 'research_tool'.\n"
                 )
