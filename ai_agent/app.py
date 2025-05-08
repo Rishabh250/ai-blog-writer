@@ -3,9 +3,10 @@ from typing import Optional
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from src.main import run_blog_generation
+from src.utils.constants import Constants
 
 app = FastAPI(
     title="AI Blog Writer API",
@@ -22,19 +23,49 @@ app.add_middleware(
 )
 
 
-class BlogMetadata(BaseModel):
-    structure: str = "blog"  # blog, how-to, listicle, comparison, guide, faq
-    persona: str = "professional"  # professional, academic, casual
-    topic: str
-    tone: str = "informative"  # informative, engaging, persuasive
-    keyword: Optional[str] = None
-    goal: str
+class Blog(BaseModel):
+    structure: str = Field(
+        default="blog",
+        description="Content structure type (blog, how-to, listicle, comparison, guide, faq)",
+    )
+    persona: str = Field(
+        default="professional",
+        description="Target audience persona (professional, academic, casual)",
+    )
+    topic: str = Field(..., description="Main topic of the blog")
+    tone: str = Field(
+        default="informative",
+        description="Content tone (informative, engaging, persuasive)",
+    )
+    keyword: Optional[str] = Field(
+        default=None, description="Primary keyword to target"
+    )
+    goal: str = Field(..., description="Purpose of the content")
+
+
+class BlogRequest(BaseModel):
+    blog: Blog
+    find_trends_type: str = Field(
+        default=Constants.FIND_TRENDS_TYPE["GOOGLE_TRENDS"],
+        description="Method to find trends data",
+    )
+    session_id: str = Field(..., description="Unique session identifier")
+    clear_memory: bool = Field(
+        default=False, description="Whether to clear session memory"
+    )
+    user_input: Optional[str] = Field(
+        default=None, description="Additional user instructions"
+    )
+    step: Optional[str] = Field(
+        default="blog_outline", description="The step of the blog generation process"
+    )
 
 
 class BlogResponse(BaseModel):
     content: str
-    html: str
+    type: str
     success: bool
+    message: Optional[str] = None
 
 
 @app.get("/")
@@ -43,19 +74,28 @@ async def root():
 
 
 @app.post("/generate-blog", response_model=BlogResponse)
-async def generate_blog(metadata: BlogMetadata):
+async def generate_blog(request: BlogRequest):
     try:
-        if not metadata.keyword:
-            metadata.keyword = metadata.topic
+        metadata_dict = request.blog.model_dump()
 
-        metadata_dict = metadata.model_dump()
-
-        content, html, success = run_blog_generation(metadata_dict)
+        content, content_type, success = run_blog_generation(
+            metadata=metadata_dict,
+            find_trends_type=request.find_trends_type,
+            session_id=request.session_id,
+            clear_memory=request.clear_memory,
+            user_input=request.user_input,
+            step=request.step,
+        )
 
         if not success:
-            raise HTTPException(status_code=400, detail="Blog generation failed")
+            return BlogResponse(
+                content=content,
+                type=content_type,
+                success=False,
+                message="Blog generation failed",
+            )
 
-        return BlogResponse(content=content, html=html, success=success)
+        return BlogResponse(content=content, type=content_type, success=True)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 

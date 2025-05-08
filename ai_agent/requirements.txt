@@ -15,4 +15,5 @@ markdown
 fastapi
 uvicorn
 ruff
+langchain-core
 

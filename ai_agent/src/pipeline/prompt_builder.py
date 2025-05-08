@@ -29,6 +29,7 @@ class BlogLengthManager:
 class PromptBuilder:
     def __init__(self, metadata_json: Dict[str, Any], **kwargs):
         self.metadata_json = metadata_json
+        self.user_input = kwargs.get("user_input", None)
         self.length_manager = BlogLengthManager(metadata_json.get("structure", "blog"))
         self.trends_data = kwargs.get("trends_data", None)
         self.research_data = kwargs.get("research_data", None)
@@ -155,6 +156,107 @@ class PromptBuilder:
         - Identify key terms or concepts to explain
 
         Present findings in a clear, structured format optimized for blog writing.
+        """
+
+        return prompt_text
+
+    def llm_trends(self):
+        prompt_text = f"""
+        You are a Blog Content Trend Analyst. Analyze current content and market trends related to "{self.metadata_json["topic"]}" to help create engaging blog content.
+
+        Please provide:
+        1. Content Trends
+           - What types of content formats are performing well for this topic?
+           - Which angles or perspectives are readers most interested in?
+           - What questions are people commonly asking?
+           - Which subtopics are trending in blog discussions?
+
+        2. Audience Interest
+           - What specific aspects of {self.metadata_json["topic"]} are gaining traction?
+           - Which pain points or challenges are readers seeking solutions for?
+           - What level of knowledge does the target audience typically have?
+           - Which related topics do readers often explore?
+
+        3. Content Opportunities
+           - What gaps exist in current blog coverage?
+           - Which unique angles could differentiate our content?
+           - What expert insights or data could add value?
+           - Which keywords or phrases should we focus on?
+
+        4. Engagement Factors
+           - What type of headlines are attracting readers?
+           - Which content elements (examples, case studies, statistics) resonate most?
+           - What content length and structure works best?
+           - Which calls-to-action are effective?
+
+        5. Recommendations
+           - Suggest 3-5 specific blog angles or approaches
+           - Recommend content elements to include
+           - Propose ways to make the content stand out
+           - Identify potential sources or references
+
+        Focus on actionable insights that will help create engaging, relevant, and valuable blog content.
+        Maximum length: 300 words.
+        """
+
+        return prompt_text
+
+    def blog_outline(self):
+        trends_text = (
+            f"\nTrend insights to consider (summarized):\n{self.trends_data}\n"
+            if self.trends_data
+            else ""
+        )
+
+        research_text = (
+            f"\nResearch insights to consider (summarized):\n{self.research_data}\n"
+            if self.research_data
+            else ""
+        )
+
+        user_input = (
+            f"\nUser input to consider:\n{self.user_input}\n" if self.user_input else ""
+        )
+
+        word_limit_instruction = self.length_manager.get_word_limit_instruction()
+
+        prompt_text = f"""
+        You are a Blog Outline Generator, an expert at creating comprehensive and engaging blog outlines.
+
+        Your task is to generate a detailed, well-structured outline for a blog post with the following specifications:
+
+        Topic: "{self.metadata_json["topic"]}"
+        Goal: "{self.metadata_json["goal"]}"
+        Structure Type: "{self.metadata_json.get("structure", "blog")}"
+        Target Persona: "{self.metadata_json.get("persona", "professional")}"
+        Desired Tone: "{self.metadata_json.get("tone", "informative")}"
+
+        {trends_text}
+        {research_text}
+        {user_input}
+
+        Please create an outline that:
+        1. Follows this structural flow: {self.steps}
+        2. Includes clear, descriptive headings and subheadings
+        3. Highlights key points to be covered under each section
+        4. Ensures logical flow and progression of ideas
+        5. Incorporates relevant keywords naturally
+        6. Addresses the target audience's needs and pain points
+        7. Maintains consistency with the desired tone and style
+        8. Includes placeholders for examples, statistics, or case studies where appropriate
+
+        For each major section, provide:
+        - Main topic/focus
+        - 2-3 key points to cover
+        - Suggested supporting elements (examples, data, quotes)
+        - Transition notes to ensure smooth flow
+
+        Format the outline using clear hierarchical structure (e.g., I, A, 1, a).
+        Aim for an outline that would support content of {word_limit_instruction}
+
+        Important: 
+        - Present only the outline structure. Do not include introductory text like "Here's a detailed blog post outline designed to educate professionals about [topic]" in your response.
+        - Do not include any other text in your response.
         """
 
         return prompt_text

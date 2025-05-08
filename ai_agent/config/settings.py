@@ -13,6 +13,11 @@ class Settings:
     # LLM Configuration
     LLM_MODEL = os.getenv("LLM_MODEL", "gemini-1.5-flash")
 
+    # Memory Configuration
+    MEMORY_TYPE = os.getenv("MEMORY_TYPE", "buffer")  # buffer or buffer_window
+    MEMORY_WINDOW_SIZE = int(os.getenv("MEMORY_WINDOW_SIZE", "5"))
+    USE_MEMORY = os.getenv("USE_MEMORY", "True").lower() == "true"
+
     # Database Configuration
     DB_URI = os.getenv("DB_URI", "")
     DB_NAME = os.getenv("DB_NAME", "blog_writer")
