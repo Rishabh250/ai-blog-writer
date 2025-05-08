@@ -53,7 +53,7 @@ async def generate_blog(metadata: BlogMetadata):
         content, html, success = run_blog_generation(metadata_dict)
 
         if not success:
-            raise HTTPException(status_code=500, detail="Blog generation failed")
+            raise HTTPException(status_code=400, detail="Blog generation failed")
 
         return BlogResponse(content=content, html=html, success=success)
     except Exception as e:
