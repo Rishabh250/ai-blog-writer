@@ -33,6 +33,7 @@ class PromptBuilder:
         self.length_manager = BlogLengthManager(metadata_json.get("structure", "blog"))
         self.trends_data = kwargs.get("trends_data", None)
         self.research_data = kwargs.get("research_data", None)
+        self.blog_outline_data = kwargs.get("blog_outline_data", None)
         self.steps = self.get_blog_structure_steps(
             metadata_json.get("structure", "blog")
         )
@@ -63,6 +64,14 @@ class PromptBuilder:
             research_text = (
                 f"\nResearch insights to consider (summarized):\n{self.research_data}\n"
                 if self.research_data
+                and section.lower()
+                in ["introduction", "main content", "guide body", "step-by-step guide"]
+                else ""
+            )
+
+            blog_outline_text = (
+                f"\nBlog outline to consider:\n{self.blog_outline_data}\n"
+                if self.blog_outline_data
                 and section.lower()
                 in ["introduction", "main content", "guide body", "step-by-step guide"]
                 else ""
@@ -99,7 +108,8 @@ class PromptBuilder:
                     "- Tone: {tone}\n"
                     "- Primary Keyword: {keyword}\n"
                     "- Purpose: {goal}\n"
-                    "- Intended Audience: {persona}\n"
+                    "- Intended Audience: {persona}\n\n"
+                    f"{blog_outline_text}\n"
                     f"{trends_text}\n"
                     f"{research_text}\n"
                     "Writing Guidelines:\n"
@@ -107,7 +117,6 @@ class PromptBuilder:
                     "Keep the language fluid, insightful, and grounded. Avoid generic phrasing and overly polished structure.\n"
                     "Avoid using placeholder phrases such as 'Okay, here's...' or 'Let me...' at the beginning of sections.\n"
                     "Write in a professional, third-person voice with a touch of authenticity.\n"
-                    "Use the research tool to get research insights for the blog post and only do research when needed, tool name is 'research_tool'.\n"
                 ),
             )
 
@@ -195,6 +204,8 @@ class PromptBuilder:
            - Propose ways to make the content stand out
            - Identify potential sources or references
 
+        Note: Add some references links to the content to make it more engaging and informative.
+
         Focus on actionable insights that will help create engaging, relevant, and valuable blog content.
         Maximum length: 300 words.
         """
@@ -244,6 +255,7 @@ class PromptBuilder:
         6. Addresses the target audience's needs and pain points
         7. Maintains consistency with the desired tone and style
         8. Includes placeholders for examples, statistics, or case studies where appropriate
+        9. Add some references links to the content to make it more engaging and informative.
 
         For each major section, provide:
         - Main topic/focus
@@ -254,7 +266,7 @@ class PromptBuilder:
         Format the outline using clear hierarchical structure (e.g., I, A, 1, a).
         Aim for an outline that would support content of {word_limit_instruction}
 
-        Important: 
+        Important:
         - Present only the outline structure. Do not include introductory text like "Here's a detailed blog post outline designed to educate professionals about [topic]" in your response.
         - Do not include any other text in your response.
         """

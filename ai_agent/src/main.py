@@ -139,12 +139,14 @@ def run_blog_generation(
 
                 memory_handler(session_id, blog_outline=blog_outline)
 
-                print(blog_outline)
+                print(f"############ Blog outline: \n{blog_outline}\n############")
 
                 return blog_outline, "blog_outline", True
 
             if step == "generate_blog":
-                prompts = PromptBuilder(metadata).build_prompt()
+                prompts = PromptBuilder(
+                    metadata, blog_outline_data=blog_outline
+                ).build_prompt()
                 llm = get_gemini_llm()
 
                 blog_sections = [
@@ -154,7 +156,7 @@ def run_blog_generation(
 
                 full_blog = "\n".join(blog_sections)
 
-                print(full_blog)
+                print(f"############ Full blog: \n{full_blog}\n############")
 
                 return full_blog, "markdown", True
 

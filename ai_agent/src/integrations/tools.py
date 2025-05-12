@@ -79,7 +79,6 @@ class FetchGoogleTrendsDataTool:
             }
             formatted_data["interest_peaks"].extend(peak_points)
 
-        # Process related keywords
         related_keywords = trends_data.get("related_keywords", {}).get("keywords", {})
         for keyword, data in related_keywords.items():
             if "timeline_data" in data:
