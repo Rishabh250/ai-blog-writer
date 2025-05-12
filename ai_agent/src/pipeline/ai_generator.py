@@ -2,7 +2,9 @@ from langchain.memory import (
     ConversationBufferMemory,
     ConversationBufferWindowMemory,
 )
+from langchain_anthropic import ChatAnthropic
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 
 from config.settings import settings
 
@@ -97,6 +99,43 @@ def clear_memory(session_id):
     return False
 
 
-def get_gemini_llm(model=settings.LLM_MODEL, **kwargs):
-    """Get a Gemini LLM instance."""
-    return ChatGoogleGenerativeAI(model=model, **kwargs)
+def get_llm(provider=None, model=None, **kwargs):
+    """Get an LLM instance based on the specified provider and model.
+
+    Args:
+        provider: The LLM provider to use (gemini, openai, or anthropic)
+        model: The specific model to use for the provider
+        **kwargs: Additional arguments to pass to the LLM constructor
+
+    Returns:
+        An LLM instance
+    """
+    if provider is None:
+        provider = settings.LLM_PROVIDER
+
+    provider = provider.lower()
+
+    if provider == "gemini":
+        if model is None:
+            model = settings.GEMINI_MODEL
+        return ChatGoogleGenerativeAI(model=model, **kwargs)
+
+    elif provider == "openai":
+        if model is None:
+            model = settings.OPENAI_MODEL
+        return ChatOpenAI(model=model, api_key=settings.OPENAI_API_KEY, **kwargs)
+
+    elif provider == "anthropic":
+        if model is None:
+            model = settings.ANTHROPIC_MODEL
+        return ChatAnthropic(model=model, api_key=settings.ANTHROPIC_API_KEY, **kwargs)
+
+    else:
+        if model is None:
+            model = settings.GEMINI_MODEL
+        return ChatGoogleGenerativeAI(model=model, **kwargs)
+
+
+def get_gemini_llm(model=settings.GEMINI_MODEL, **kwargs):
+    """Get a Gemini LLM instance (for backward compatibility)."""
+    return get_llm(provider="gemini", model=model, **kwargs)

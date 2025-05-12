@@ -9,9 +9,21 @@ load_dotenv()
 class Settings:
     # API Keys
     GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+    ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 
     # LLM Configuration
-    LLM_MODEL = os.getenv("LLM_MODEL", "gemini-1.5-flash")
+    LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini")  # gemini, openai, anthropic
+
+    # Model configurations
+    # Gemini models
+    GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+
+    # OpenAI models
+    OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
+
+    # Anthropic models
+    ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-3-opus-20240229")
 
     # Memory Configuration
     MEMORY_TYPE = os.getenv("MEMORY_TYPE", "buffer")  # buffer or buffer_window

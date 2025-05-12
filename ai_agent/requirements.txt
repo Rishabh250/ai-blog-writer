@@ -1,5 +1,9 @@
 langchain
 langchain-google-genai
+langchain-openai
+langchain-anthropic
+langchain-core
+langchain-community
 pydantic
 validators
 python-dotenv
@@ -9,11 +13,14 @@ uuid
 loguru
 serpapi
 google-search-results
-langchain-community
+openai
+anthropic
 beautifulsoup4
 markdown
 fastapi
 uvicorn
+gunicorn
 ruff
-langchain-core
-
+httpx
+python-multipart
+jinja2

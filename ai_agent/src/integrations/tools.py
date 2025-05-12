@@ -1,11 +1,11 @@
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 from serpapi import GoogleSearch
 
 from config.settings import settings
-from src.pipeline.ai_generator import get_gemini_llm
+from src.pipeline.ai_generator import get_llm
 from src.pipeline.prompt_builder import PromptBuilder
 
 
@@ -14,10 +14,13 @@ class UserStepAnalysis(BaseModel):
 
 
 class FetchGoogleTrendsDataTool:
-    def __init__(self, metadata_json: Dict[str, Any]):
+    def __init__(
+        self, metadata_json: Dict[str, Any], llm_provider: Optional[str] = None
+    ):
         self.settings = settings
         self.metadata_json = metadata_json
         self.query = metadata_json["topic"]
+        self.llm_provider = llm_provider
 
     def _get_trends_data(self, data_type="TIMESERIES", time_period="today 3-m") -> Dict:
         params = {
@@ -146,7 +149,11 @@ class FetchGoogleTrendsDataTool:
             }
 
             prompt_builder = PromptBuilder(self.metadata_json, trends_data=data)
-            return get_gemini_llm().invoke(prompt_builder.data_trends()).content
+            return (
+                get_llm(provider=self.llm_provider)
+                .invoke(prompt_builder.data_trends())
+                .content
+            )
 
         except (KeyError, ValueError, TypeError) as e:
             print(f"Error in get_raw_trends: {str(e)}")
@@ -204,21 +211,35 @@ class FetchGoogleTrendsDataTool:
 
 
 class ResearchTool:
-    def __init__(self, metadata_json: Dict[str, Any]):
+    def __init__(
+        self, metadata_json: Dict[str, Any], llm_provider: Optional[str] = None
+    ):
         self.metadata_json = metadata_json
+        self.llm_provider = llm_provider
 
     def get_research(self) -> str:
         prompt_builder = PromptBuilder(metadata_json=self.metadata_json)
-        return get_gemini_llm().invoke(prompt_builder.research_prompt()).content
+        return (
+            get_llm(provider=self.llm_provider)
+            .invoke(prompt_builder.research_prompt())
+            .content
+        )
 
 
 class LLMTrendsTool:
-    def __init__(self, metadata_json: Dict[str, Any]):
+    def __init__(
+        self, metadata_json: Dict[str, Any], llm_provider: Optional[str] = None
+    ):
         self.metadata_json = metadata_json
+        self.llm_provider = llm_provider
 
     def get_llm_trends(self) -> str:
         prompt_builder = PromptBuilder(metadata_json=self.metadata_json)
-        return get_gemini_llm().invoke(prompt_builder.llm_trends()).content
+        return (
+            get_llm(provider=self.llm_provider)
+            .invoke(prompt_builder.llm_trends())
+            .content
+        )
 
 
 class BlogOutlineTool:
@@ -228,11 +249,13 @@ class BlogOutlineTool:
         trends_data: Dict = None,
         research_data: Dict = None,
         user_input: str = None,
+        llm_provider: Optional[str] = None,
     ):
         self.metadata_json = metadata_json
         self.trends_data = trends_data
         self.research_data = research_data
         self.user_input = user_input
+        self.llm_provider = llm_provider
 
     def get_blog_outline(self) -> str:
         prompt_builder = PromptBuilder(
@@ -241,4 +264,8 @@ class BlogOutlineTool:
             research_data=self.research_data,
             user_input=self.user_input,
         )
-        return get_gemini_llm().invoke(prompt_builder.blog_outline()).content
+        return (
+            get_llm(provider=self.llm_provider)
+            .invoke(prompt_builder.blog_outline())
+            .content
+        )

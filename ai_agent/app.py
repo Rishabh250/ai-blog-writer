@@ -59,6 +59,9 @@ class BlogRequest(BaseModel):
     step: Optional[str] = Field(
         default="blog_outline", description="The step of the blog generation process"
     )
+    llm_provider: Optional[str] = Field(
+        default=None, description="LLM provider to use (gemini, openai, anthropic)"
+    )
 
 
 class BlogResponse(BaseModel):
@@ -85,6 +88,7 @@ async def generate_blog(request: BlogRequest):
             clear_memory=request.clear_memory,
             user_input=request.user_input,
             step=request.step,
+            llm_provider=request.llm_provider,
         )
 
         if not success:

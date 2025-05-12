@@ -49,75 +49,112 @@ class PromptBuilder:
 
         return steps
 
-    def build_prompt(self):
+    def build_prompt(self) -> Dict[str, PromptTemplate]:
+        """
+        Constructs a dictionary of Langchain PromptTemplates, one for each
+        section defined in the blog structure steps, tailored for professional
+        content generation.
+
+        Returns:
+            Dict[str, PromptTemplate]: A dictionary where keys are section names
+                                       and values are the corresponding PromptTemplates.
+        """
         prompts = {}
+        # Define sections where contextual data (trends, research, outline) is most relevant
+        context_relevant_sections = {
+            "introduction",
+            "main content",
+            "guide body",
+            "step-by-step guide",
+            "meta description",
+            "faqs",
+        }
+
+        # Safely retrieve the structure type, defaulting to 'blog'
+        structure_type = self.metadata_json.get("structure", "blog")
 
         for section in self.steps:
+            section_lower = section.lower()
+            include_context = section_lower in context_relevant_sections
+
+            # Prepare contextual information strings, only if data exists and section is relevant
             trends_text = (
-                f"\nTrend insights to consider (summarized):\n{self.trends_data}\n"
-                if self.trends_data
-                and section.lower()
-                in ["introduction", "main content", "guide body", "step-by-step guide"]
+                f"\n**Trend Insights (Summary):**\n{self.trends_data}\n"
+                if self.trends_data and include_context
                 else ""
             )
-
             research_text = (
-                f"\nResearch insights to consider (summarized):\n{self.research_data}\n"
-                if self.research_data
-                and section.lower()
-                in ["introduction", "main content", "guide body", "step-by-step guide"]
+                f"\n**Research Insights (Summary):**\n{self.research_data}\n"
+                if self.research_data and include_context
                 else ""
             )
-
             blog_outline_text = (
-                f"\nBlog outline to consider:\n{self.blog_outline_data}\n"
-                if self.blog_outline_data
-                and section.lower()
-                in ["introduction", "main content", "guide body", "step-by-step guide"]
+                f"\n**Blog Outline Reference:**\n{self.blog_outline_data}\n"
+                if self.blog_outline_data and include_context
                 else ""
             )
 
-            if section.lower() == "meta description":
-                guidelines = "- Write a natural-sounding, SEO-optimized meta description (150–160 characters) that clearly conveys the article's value.\n"
-            elif section.lower() == "faqs":
-                guidelines = "- List 3–5 unique, practical FAQs with clear, non-repetitive answers that address common reader concerns.\n"
-            else:
+            # Define section-specific writing guidelines
+            if section_lower == "meta description":
                 guidelines = (
-                    "- Begin with a relatable or thought-provoking opening line if relevant.\n"
-                    "- Use natural phrasing and varied sentence lengths to engage readers.\n"
-                    "- Integrate keywords contextually, without sounding robotic.\n"
-                    "- Include real-world examples, statistics, or quotes where appropriate.\n"
-                    "- Use subheadings for clarity, and ensure smooth transitions between ideas.\n"
+                    "- Craft a compelling, SEO-optimized meta description (150–160 characters).\n"
+                    "- Ensure it accurately reflects the article's core value and encourages clicks.\n"
+                    "- Integrate the primary keyword naturally.\n"
+                )
+            elif section_lower == "faqs":
+                guidelines = (
+                    "- Develop 3–5 unique and practical FAQs relevant to the main topic.\n"
+                    "- Provide clear, concise, and non-repetitive answers.\n"
+                    "- Address potential reader questions or concerns effectively.\n"
+                )
+            else:
+                # General guidelines for body sections
+                guidelines = (
+                    "- Initiate with an engaging hook (e.g., relatable scenario, compelling statistic, thought-provoking question) appropriate for the section.\n"
+                    "- Employ natural, fluent language and vary sentence structure to maintain reader interest.\n"
+                    "- Seamlessly integrate the primary keyword and related terms where contextually appropriate, avoiding keyword stuffing.\n"
+                    "- Incorporate credible evidence (e.g., statistics, real-world examples, expert quotes) to substantiate claims.\n"
+                    "- Utilize subheadings (H2, H3, etc.) to organize content logically and enhance readability.\n"
+                    "- Ensure smooth, logical transitions between paragraphs and ideas.\n"
                 )
 
+            # Construct the prompt template for the current section
+            # Note: Using .get() for metadata access within the f-string for robustness
+            template_str = (
+                f"**Role:** Assume the persona of an expert Human Blog Writer specializing in '{self.metadata_json.get('topic', 'the specified topic')}'.\n"
+                f"**Task:** Generate **only** the content for the '{section}' section of a '{structure_type}' article.\n"
+                f"**Critical Instruction:** Your writing style *must* be indistinguishable from high-quality human writing. Avoid AI-like patterns, generic statements, excessive formality, or robotic phrasing. Prioritize authenticity, clarity, depth, and reader engagement.\n\n"
+                f"**Content Brief:**\n"
+                f"- Article Topic: {{topic}}\n"
+                f"- Target Audience: {{persona}}\n"
+                f"- Desired Tone: {{tone}}\n"
+                f"- Primary Keyword Focus: {{keyword}}\n"
+                f"- Core Objective: {{goal}}\n\n"
+                f"**Contextual Information (Leverage if provided and relevant to this specific '{section}' section):**"
+                f"{blog_outline_text}"
+                f"{trends_text}"
+                f"{research_text}\n"
+                f"**Specific Writing Guidelines for the '{section}' Section:**\n"
+                f"{guidelines}\n"
+                f"**Overall Stylistic Requirements:**\n"
+                f"- Maintain a professional, authoritative, yet accessible third-person voice (unless persona dictates otherwise).\n"
+                f"- Focus on delivering insightful, valuable content with fluid prose.\n"
+                f"- **Strictly avoid** introductory filler phrases (e.g., 'Certainly, here is...', 'Okay, let's craft...', 'In this section...'). Begin writing the section content directly.\n"
+            )
+
+            # Create the PromptTemplate instance
             template = PromptTemplate(
                 input_variables=[
-                    "structure",
+                    # Variables expected to be filled in from metadata or other sources
                     "persona",
                     "topic",
                     "tone",
                     "keyword",
                     "goal",
+                    # 'structure' is available via self.metadata_json but kept here for potential direct use
+                    "structure",
                 ],
-                template=(
-                    f"You are a highly experienced human blog writer, not an AI.\n"
-                    f"Write only the **{section}** section of a {self.metadata_json['structure']} article.\n"
-                    "Your writing must sound completely human and avoid common AI patterns.\n\n"
-                    "Content Brief:\n"
-                    "- Topic: {topic}\n"
-                    "- Tone: {tone}\n"
-                    "- Primary Keyword: {keyword}\n"
-                    "- Purpose: {goal}\n"
-                    "- Intended Audience: {persona}\n\n"
-                    f"{blog_outline_text}\n"
-                    f"{trends_text}\n"
-                    f"{research_text}\n"
-                    "Writing Guidelines:\n"
-                    f"{guidelines}"
-                    "Keep the language fluid, insightful, and grounded. Avoid generic phrasing and overly polished structure.\n"
-                    "Avoid using placeholder phrases such as 'Okay, here's...' or 'Let me...' at the beginning of sections.\n"
-                    "Write in a professional, third-person voice with a touch of authenticity.\n"
-                ),
+                template=template_str,
             )
 
             prompts[section] = template
@@ -126,88 +163,114 @@ class PromptBuilder:
 
     def data_trends(self):
         prompt_text = f"""
-        Analyze the following Google Trends data related to "{self.metadata_json["topic"]}":
+        You are a professional Data Analyst tasked with interpreting Google Trends data.
 
+        **Objective:** Conduct a comprehensive analysis of the provided Google Trends data for the topic "{self.metadata_json["topic"]}" to derive actionable insights for content strategy and marketing efforts.
+
+        **Input Data:**
+        Google Trends data related to "{self.metadata_json["topic"]}":
+        ```
         {self.trends_data}
+        ```
 
-        Your analysis should include:
-        1. A brief summary of the overall trend.
-        2. Key patterns such as spikes, declines, or sustained interest.
-        3. Notable regions, time periods, or search terms driving the trend.
-        4. Possible reasons behind the observed patterns.
-        5. Actionable insights for marketing, content planning, or strategy.
+        **Analysis Requirements:**
+        Your report must address the following key areas in a structured manner:
 
-        Provide a clear and well-organized report.
+        1.  **Executive Summary:** A brief overview summarizing the core findings and overall trend direction.
+        2.  **Detailed Trend Analysis:** Identify and elaborate on significant patterns, including:
+            *   Periods of peak interest (spikes) and potential catalysts.
+            *   Periods of declining interest and potential reasons.
+            *   Evidence of seasonality or sustained interest levels.
+        3.  **Geographic and Temporal Insights:** Highlight notable variations in interest across different regions and time periods. Pinpoint specific search terms or related queries that are driving the trends, if available in the data.
+        4.  **Causal Factors (Hypothesized):** Propose plausible explanations for the observed trends and patterns, considering potential market events, news cycles, or other external influences.
+        5.  **Strategic Implications & Recommendations:** Translate the analysis into actionable recommendations for:
+            *   Marketing campaign timing and focus.
+            *   Content creation themes and topic prioritization.
+            *   Broader business or content strategy adjustments.
+
+        **Output Format:**
+        Deliver a clear, concise, and professionally structured report. Ensure all conclusions are data-driven and insights are directly applicable to strategic planning.
         """
 
         return prompt_text
 
     def research_prompt(self):
         prompt_text = f"""
-        You are a Research Agent supporting blog content creation.
+        **Role:** You are a Senior Research Analyst tasked with providing foundational research for high-quality blog content creation.
 
-        Goal: "{self.metadata_json["goal"]}"
-        Topic: "{self.metadata_json["topic"]}"
+        **Objective:** Conduct thorough background research on the specified topic to inform the writing process and ensure accuracy, depth, and relevance.
 
-        Research Objectives:
-        1. Summarize the topic's current landscape and relevance.
-        2. Identify key trends, controversies, or recent developments.
-        3. Highlight authoritative sources, influential figures, or organizations in this field.
-        4. Uncover statistics, case studies, or examples that illustrate important points.
-        5. Explore different perspectives or approaches to the topic.
-        6. Identify potential challenges or criticisms related to the topic.
-        7. Maximum size of the research should be less than 300 words.
+        **Context:**
+        - **Blog Goal:** "{self.metadata_json["goal"]}"
+        - **Primary Topic:** "{self.metadata_json["topic"]}"
 
-        Provide actionable insights for blog writers:
-        - Suggest compelling angles or hooks for the blog post
-        - Recommend subtopics or sections to cover
-        - Propose questions the blog post should address
-        - Identify key terms or concepts to explain
+        **Research Mandate:**
+        1.  **Current Landscape & Relevance:** Provide a concise overview of the current landscape and establish the topic's relevance.
+        2.  **Trends & Developments:** Identify significant current trends, ongoing controversies, and notable recent developments.
+        3.  **Authorities & Influencers:** Pinpoint key authoritative sources, influential thought leaders, and prominent organizations within this domain.
+        4.  **Supporting Evidence:** Compile pertinent statistics, relevant case studies, and illustrative examples to substantiate key points.
+        5.  **Perspectives & Approaches:** Analyze diverse perspectives and methodologies related to the topic.
+        6.  **Challenges & Criticisms:** Outline potential challenges, limitations, or criticisms associated with the topic.
 
-        Present findings in a clear, structured format optimized for blog writing.
+        **Actionable Recommendations for Blog Content:**
+        Based on your research, provide specific, actionable insights for the blog writer:
+        - **Compelling Angles:** Propose unique and compelling narrative angles or hooks to capture reader interest.
+        - **Content Structure:** Recommend essential subtopics and a logical structure for the blog post.
+        - **Key Questions:** Formulate critical questions the blog post should aim to answer for the target audience.
+        - **Terminology:** Identify crucial terms or concepts requiring clear explanation.
+
+        **Output Requirements:**
+        - Present findings in a clear, structured, and easily digestible format, optimized for direct use by blog writers.
+        - Ensure all information is accurate and verifiable where possible.
+        - Deliver a comprehensive yet concise summary, strictly adhering to a **maximum length of 300 words**. Focus on impactful information.
         """
 
         return prompt_text
 
     def llm_trends(self):
         prompt_text = f"""
-        You are a Blog Content Trend Analyst. Analyze current content and market trends related to "{self.metadata_json["topic"]}" to help create engaging blog content.
+        **Role:** Senior Market Research Analyst specializing in Digital Content Trends.
 
-        Please provide:
-        1. Content Trends
-           - What types of content formats are performing well for this topic?
-           - Which angles or perspectives are readers most interested in?
-           - What questions are people commonly asking?
-           - Which subtopics are trending in blog discussions?
+        **Objective:** Conduct a comprehensive analysis of current content and market trends related to the topic "{self.metadata_json["topic"]}". The goal is to identify strategic insights and actionable recommendations for developing high-impact, engaging, and differentiated blog content.
 
-        2. Audience Interest
-           - What specific aspects of {self.metadata_json["topic"]} are gaining traction?
-           - Which pain points or challenges are readers seeking solutions for?
-           - What level of knowledge does the target audience typically have?
-           - Which related topics do readers often explore?
+        **Analysis Requirements:**
 
-        3. Content Opportunities
-           - What gaps exist in current blog coverage?
-           - Which unique angles could differentiate our content?
-           - What expert insights or data could add value?
-           - Which keywords or phrases should we focus on?
+        Please provide a structured report covering the following areas:
 
-        4. Engagement Factors
-           - What type of headlines are attracting readers?
-           - Which content elements (examples, case studies, statistics) resonate most?
-           - What content length and structure works best?
-           - Which calls-to-action are effective?
+        1.  **Current Content Landscape & Performance:**
+            *   Identify dominant content formats (e.g., tutorials, case studies, opinion pieces, data reports) successfully employed for "{self.metadata_json["topic"]}".
+            *   Analyze prevailing angles, narratives, and perspectives resonating most strongly with the target audience.
+            *   Determine the most frequently asked questions and search queries related to this topic.
+            *   Pinpoint trending subtopics and niche areas within the broader "{self.metadata_json["topic"]}" discussion.
 
-        5. Recommendations
-           - Suggest 3-5 specific blog angles or approaches
-           - Recommend content elements to include
-           - Propose ways to make the content stand out
-           - Identify potential sources or references
+        2.  **Target Audience Insights:**
+            *   Detail specific facets or sub-themes of "{self.metadata_json["topic"]}" currently experiencing heightened audience interest or engagement.
+            *   Identify key reader pain points, challenges, or aspirations that content within this topic area should address.
+            *   Assess the typical knowledge level and sophistication of the target audience for this topic.
+            *   Map out related topics, interests, or adjacent fields commonly explored by the audience.
 
-        Note: Add some references links to the content to make it more engaging and informative.
+        3.  **Strategic Content Opportunities:**
+            *   Identify underserved areas or content gaps within the existing blog coverage of "{self.metadata_json["topic"]}".
+            *   Propose unique, differentiated angles or value propositions to distinguish future content.
+            *   Suggest types of expert insights, proprietary data, or original research that could significantly enhance content value.
+            *   Recommend primary and secondary keywords/phrases exhibiting high potential for organic visibility and relevance.
 
-        Focus on actionable insights that will help create engaging, relevant, and valuable blog content.
-        Maximum length: 300 words.
+        4.  **Engagement & Optimization Factors:**
+            *   Analyze characteristics of high-performing headlines and titles within this topic space.
+            *   Evaluate the impact of specific content elements (e.g., data visualizations, expert quotes, interactive elements, case studies, practical examples) on reader engagement.
+            *   Provide recommendations on optimal content length, structure, and formatting based on current best practices for "{self.metadata_json["topic"]}".
+            *   Identify effective call-to-action (CTA) strategies relevant to the topic and audience.
+
+        5.  **Actionable Recommendations:**
+            *   Propose 3-5 specific, well-rationalized blog post concepts or strategic approaches.
+            *   Recommend essential content elements, data points, or expert perspectives to incorporate for maximum impact.
+            *   Suggest concrete strategies to ensure the content stands out from competitors.
+            *   Identify credible sources, potential expert contributors, or relevant data repositories for reference and validation. Include examples of high-quality reference links where applicable.
+
+        **Output Guidelines:**
+        *   Focus strictly on actionable, data-informed insights directly applicable to blog content strategy and creation.
+        *   Maintain a professional, analytical tone.
+        *   Ensure the total response length does not exceed 300 words.
         """
 
         return prompt_text
@@ -232,43 +295,43 @@ class PromptBuilder:
         word_limit_instruction = self.length_manager.get_word_limit_instruction()
 
         prompt_text = f"""
-        You are a Blog Outline Generator, an expert at creating comprehensive and engaging blog outlines.
+        **Role:** Expert Content Strategist specializing in Blog Architecture.
 
-        Your task is to generate a detailed, well-structured outline for a blog post with the following specifications:
+        **Objective:** Generate a comprehensive, strategically sound, and highly detailed outline for a blog post based on the provided specifications. The outline must serve as a robust blueprint for content creation, adhering strictly to the required format and constraints.
 
-        Topic: "{self.metadata_json["topic"]}"
-        Goal: "{self.metadata_json["goal"]}"
-        Structure Type: "{self.metadata_json.get("structure", "blog")}"
-        Target Persona: "{self.metadata_json.get("persona", "professional")}"
-        Desired Tone: "{self.metadata_json.get("tone", "informative")}"
+        **Input Specifications:**
+        *   **Topic:** "{self.metadata_json["topic"]}"
+        *   **Primary Goal:** "{self.metadata_json["goal"]}"
+        *   **Content Structure Type:** "{self.metadata_json.get("structure", "blog")}"
+        *   **Target Audience Persona:** "{self.metadata_json.get("persona", "professional")}"
+        *   **Desired Tone:** "{self.metadata_json.get("tone", "informative")}"
+        *   **Mandatory Structural Flow:** {self.steps}
+        *   **Target Word Count Guidance:** {word_limit_instruction}
+        *   **Primary Keyword (if provided):** "{self.metadata_json.get("keyword", "N/A")}"
 
+        **Contextual Data (Incorporate these insights):**
         {trends_text}
         {research_text}
         {user_input}
 
-        Please create an outline that:
-        1. Follows this structural flow: {self.steps}
-        2. Includes clear, descriptive headings and subheadings
-        3. Highlights key points to be covered under each section
-        4. Ensures logical flow and progression of ideas
-        5. Incorporates relevant keywords naturally
-        6. Addresses the target audience's needs and pain points
-        7. Maintains consistency with the desired tone and style
-        8. Includes placeholders for examples, statistics, or case studies where appropriate
-        9. Add some references links to the content to make it more engaging and informative.
+        **Outline Requirements:**
+        1.  **Structural Adherence:** Strictly follow the specified structural flow: {self.steps}.
+        2.  **Headings & Subheadings:** Craft clear, compelling, and descriptive headings/subheadings. Optimize for readability and potential SEO value where appropriate.
+        3.  **Section Depth:** For each major section defined in the structural flow, detail:
+            *   The core focus or main topic.
+            *   2-4 substantive key points, arguments, or steps to be elaborated upon.
+            *   Suggestions for supporting elements (e.g., specific data points, types of examples, potential case studies, relevant statistics, expert quotes).
+        4.  **Logical Progression:** Ensure a seamless and logical flow of information between sections and points, facilitating reader comprehension.
+        5.  **Keyword Integration:** Naturally integrate the primary keyword and related terms throughout the outline's suggested content points.
+        6.  **Audience & Goal Alignment:** Directly address the needs, pain points, and knowledge level of the "{self.metadata_json.get("persona", "professional")}" persona. Ensure the outline structure and content points clearly support achieving the stated "{self.metadata_json["goal"]}".
+        7.  **Tone Consistency:** Reflect the specified "{self.metadata_json.get("tone", "informative")}" in the nature and framing of the outlined points.
+        8.  **Actionability & Value:** Design an outline that guides the creation of practical, valuable, and engaging final content for the target audience.
+        9.  **Source Integration:** Indicate logical points within the outline where incorporating credible references, data, or external links would enhance authority and reader value.
 
-        For each major section, provide:
-        - Main topic/focus
-        - 2-3 key points to cover
-        - Suggested supporting elements (examples, data, quotes)
-        - Transition notes to ensure smooth flow
-
-        Format the outline using clear hierarchical structure (e.g., I, A, 1, a).
-        Aim for an outline that would support content of {word_limit_instruction}
-
-        Important:
-        - Present only the outline structure. Do not include introductory text like "Here's a detailed blog post outline designed to educate professionals about [topic]" in your response.
-        - Do not include any other text in your response.
+        **Output Format & Constraints:**
+        *   **Format:** Utilize a clear hierarchical structure (e.g., I., A., 1., a.).
+        *   **Content:** Output *only* the structured outline.
+        *   **Exclusions:** CRITICAL - Do NOT include any introductory sentences (e.g., "Here is the outline...", "Okay, here's the structure..."), concluding remarks, summaries, or any text whatsoever outside the hierarchical outline structure itself. The response MUST begin directly with the first heading/point of the outline (e.g., "I. Introduction").
         """
 
         return prompt_text

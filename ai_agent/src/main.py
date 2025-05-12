@@ -7,7 +7,7 @@ from src.integrations.tools import (
     LLMTrendsTool,
     ResearchTool,
 )
-from src.pipeline.ai_generator import get_gemini_llm, get_memory
+from src.pipeline.ai_generator import get_llm, get_memory
 from src.pipeline.prompt_builder import PromptBuilder
 from src.utils.constants import Constants
 
@@ -61,13 +61,14 @@ def retrieve_data_from_memory(session_id: str) -> Dict[str, Any]:
 
 
 def initialize_ai_tools(
-    metadata: Dict[str, Any], find_trends_type: str
+    metadata: Dict[str, Any], find_trends_type: str, llm_provider: Optional[str] = None
 ) -> Tuple[Any, Any]:
     """Initialize and run AI tools to gather trends and research data.
 
     Args:
         metadata: The metadata for the blog
         find_trends_type: The type of trends to find
+        llm_provider: Optional LLM provider to use
 
     Returns:
         Tuple of trends_data and research_data
@@ -92,6 +93,7 @@ def run_blog_generation(
     clear_memory: bool = False,
     user_input: Optional[str] = None,
     step: Optional[str] = None,
+    llm_provider: Optional[str] = None,
 ) -> Tuple[str, str, bool]:
     """Generate a blog based on metadata and optional session data.
 
@@ -102,6 +104,7 @@ def run_blog_generation(
         clear_memory: Whether to clear memory for this session
         user_input: Optional user input to incorporate
         step: The step of the blog generation process
+        llm_provider: Optional LLM provider to use (gemini, openai, anthropic)
 
     Returns:
         Tuple of (content, content_type, success_flag)
@@ -123,7 +126,7 @@ def run_blog_generation(
 
             if not trends_data or not research_data:
                 trends_data, research_data = initialize_ai_tools(
-                    metadata, find_trends_type
+                    metadata, find_trends_type, llm_provider
                 )
 
                 memory_handler(
@@ -139,7 +142,7 @@ def run_blog_generation(
 
                 memory_handler(session_id, blog_outline=blog_outline)
 
-                print(f"############ Blog outline: \n{blog_outline}\n############")
+                print(f"############ Blog outline: \n{blog_outline}")
 
                 return blog_outline, "blog_outline", True
 
@@ -147,7 +150,7 @@ def run_blog_generation(
                 prompts = PromptBuilder(
                     metadata, blog_outline_data=blog_outline
                 ).build_prompt()
-                llm = get_gemini_llm()
+                llm = get_llm(provider=llm_provider)
 
                 blog_sections = [
                     f"{llm.invoke(prompt_template.format(**metadata)).content}\n"

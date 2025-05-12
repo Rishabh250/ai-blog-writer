@@ -1,10 +1,13 @@
 # AI Blog Writer
 
-An intelligent blog post generator that creates high-quality, SEO-friendly content using LangChain and Gemini, enriched with real-time trend data and AI-powered research capabilities.
+An intelligent blog post generator that creates high-quality, SEO-friendly content using LangChain with multiple LLM providers (Gemini, OpenAI, Anthropic), enriched with real-time trend data and AI-powered research capabilities.
 
 ## Features
 
-- Advanced AI content generation using Gemini LLM through LangChain
+- Advanced AI content generation using multiple LLM providers:
+  - Google's Gemini
+  - OpenAI (GPT models)
+  - Anthropic (Claude models)
 - Professional-grade prompt engineering with dynamic template generation
 - Automatic research integration using dedicated AI agents
 - Real-time Google Trends data analysis for timely content
@@ -19,12 +22,12 @@ The AI Blog Writer uses a sophisticated pipeline architecture:
 1. **Input Processing**: Takes structured metadata about the desired blog post
 2. **Research & Trends**: Automatically gathers relevant research and trend data
 3. **Prompt Engineering**: Generates tailored prompts for each blog section
-4. **AI Content Generation**: Uses Gemini LLM to create high-quality content
+4. **AI Content Generation**: Uses your preferred LLM to create high-quality content
 5. **Output Formatting**: Delivers content in both Markdown and HTML formats
 
 ## Example Usage
 
-Here's how to generate a blog post about education loans for studying in the USA:
+Here's how to generate a blog post about education loans for studying in the USA, specifying the LLM provider:
 
 ```python
 from src.main import run_blog_generation
@@ -38,8 +41,11 @@ metadata_json = {
     "goal": "Provide comprehensive information about education loan options for students planning to study in the USA"
 }
 
-# Generate the blog post
-blog_markdown, blog_text, blog_html, success = run_blog_generation(metadata_json)
+# Generate the blog post using OpenAI
+blog_markdown, blog_text, blog_html, success = run_blog_generation(
+    metadata_json, 
+    llm_provider="openai"  # Options: "gemini", "openai", "anthropic"
+)
 
 # If successful, use the content as needed
 if success:
@@ -50,7 +56,10 @@ if success:
 ## Prerequisites
 
 - Python 3.9+
-- Google Cloud Project with Gemini API enabled
+- API keys for your chosen LLM provider(s):
+  - Google API key for Gemini
+  - OpenAI API key for GPT models
+  - Anthropic API key for Claude models
 - SerpAPI key for Google Trends data
 - (Optional) Database for content storage
 
@@ -89,9 +98,21 @@ uv install -r requirements.txt
 Create a `.env` file with the following variables:
 
 ```
+# API Keys
 GOOGLE_API_KEY=your_google_api_key
+OPENAI_API_KEY=your_openai_api_key
+ANTHROPIC_API_KEY=your_anthropic_api_key
 SERPAPI_KEY=your_serpapi_key
-LLM_MODEL=gemini-1.5-flash
+
+# LLM Configuration
+LLM_PROVIDER=gemini  # Default provider: gemini, openai, or anthropic
+
+# Model configurations
+GEMINI_MODEL=gemini-1.5-flash
+OPENAI_MODEL=gpt-4o
+ANTHROPIC_MODEL=claude-3-opus-20240229
+
+# Other settings
 DATABASE_URI=your_database_uri
 GOOGLE_DRIVE_FOLDER_ID=your_folder_id (optional)
 DEBUG=False
@@ -114,45 +135,62 @@ metadata_json = {
     "goal": "Your Goal"
 }
 
+# Generate with default provider (from environment variable)
 blog_markdown, blog_text, blog_html, success = run_blog_generation(metadata_json)
+
+# Or specify a provider
+blog_markdown, blog_text, blog_html, success = run_blog_generation(
+    metadata_json, 
+    llm_provider="anthropic"
+)
 ```
 
-### Method 2: Create a Simple Interface
+### Method 2: REST API
 
-Create a file called `generate.py` in the project root with this content:
-
-```python
-from src.main import run_blog_generation
-import json
-import sys
-
-def main():
-    if len(sys.argv) < 2:
-        print("Please provide a JSON file with blog metadata")
-        return
-    
-    with open(sys.argv[1], 'r') as f:
-        metadata = json.load(f)
-    
-    blog_markdown, blog_text, blog_html, success = run_blog_generation(metadata)
-    
-    if success:
-        output_file = metadata.get('output_file', 'output_blog.md')
-        with open(output_file, 'w') as f:
-            f.write(blog_markdown)
-        print(f"Blog successfully written to {output_file}")
-    else:
-        print(f"Error: {blog_markdown}")
-
-if __name__ == "__main__":
-    main()
-```
-
-Then run:
+You can use the FastAPI-based REST API:
 
 ```bash
-python generate.py your_metadata.json
+uvicorn app:app --reload
 ```
+
+Then send a POST request to `/generate-blog`:
+
+```json
+{
+  "blog": {
+    "structure": "blog",
+    "persona": "professional",
+    "topic": "Your Topic",
+    "tone": "professional",
+    "keyword": "Your Keyword",
+    "goal": "Your Goal"
+  },
+  "find_trends_type": "google_trends",
+  "session_id": "unique-session-id",
+  "clear_memory": false,
+  "user_input": "Additional instructions",
+  "step": "blog_outline",
+  "llm_provider": "openai"
+}
+```
+
+## Switching Between LLM Providers
+
+The system supports three LLM providers:
+
+1. **Gemini** - Google's advanced LLMs
+   - Set `LLM_PROVIDER=gemini` in `.env` or specify `llm_provider="gemini"` in function calls
+   - Configure model with `GEMINI_MODEL=gemini-1.5-flash` (or other available Gemini models)
+
+2. **OpenAI** - GPT series models
+   - Set `LLM_PROVIDER=openai` in `.env` or specify `llm_provider="openai"` in function calls
+   - Configure model with `OPENAI_MODEL=gpt-4o` (or other available OpenAI models)
+
+3. **Anthropic** - Claude series models
+   - Set `LLM_PROVIDER=anthropic` in `.env` or specify `llm_provider="anthropic"` in function calls
+   - Configure model with `ANTHROPIC_MODEL=claude-3-opus-20240229` (or other available Anthropic models)
+
+The default provider is set in the `.env` file, but can be overridden per call by specifying the `llm_provider` parameter.
 
 ## Project Structure
 
@@ -198,7 +236,6 @@ ai-blog-writer/
 
 - **main.py**: Contains the core `run_blog_generation()` function for generating blog content
 - **prompt_builder.py**: Defines the `PromptBuilder` class that creates dynamic prompts for each blog section
-- **tools.py**: Integrates external tools like Google Trends analysis and AI-powered research
 
 ### Blog Structure Types
 
